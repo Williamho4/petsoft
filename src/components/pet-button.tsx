@@ -11,23 +11,26 @@ import {
   DialogTrigger,
 } from './ui/dialog'
 import PetForm from './pet-form'
+import { flushSync } from 'react-dom'
 
 type PetButtonProps = {
   actionType: 'add' | 'edit' | 'checkout'
   children?: React.ReactNode
   onClick?: () => void
+  disabled?: boolean
 }
 
 export default function PetButton({
   actionType,
   children,
   onClick,
+  disabled,
 }: PetButtonProps) {
   const [isFormOpen, setIsFormOpen] = useState(false)
 
   if (actionType === 'checkout') {
     return (
-      <Button variant="secondary" onClick={onClick}>
+      <Button disabled={disabled} variant="secondary" onClick={onClick}>
         {children}
       </Button>
     )
@@ -52,7 +55,11 @@ export default function PetButton({
         </DialogHeader>
         <PetForm
           actionType={actionType}
-          onFormSubmission={() => setIsFormOpen(false)}
+          onFormSubmission={() => {
+            flushSync(() => {
+              setIsFormOpen(false)
+            })
+          }}
         />
       </DialogContent>
     </Dialog>
