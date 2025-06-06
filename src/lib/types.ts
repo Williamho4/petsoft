@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 export type Pet = {
   id: string
   name: string
@@ -6,3 +7,8 @@ export type Pet = {
   age: number
   notes: string
 }
+=======
+import { Pet } from '@prisma/client'
+
+export type PetPayload = Omit<Pet, 'id' | 'updatedAt' | 'createdAt' | 'userId'>
+>>>>>>> 20e67b3 (auth)
