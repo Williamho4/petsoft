@@ -6,36 +6,14 @@ import { Label } from './ui/label'
 import { Textarea } from './ui/textarea'
 import PetFormBtn from './pet-form-btn'
 import { useForm } from 'react-hook-form'
-import { PetPayload } from '@/lib/types'
 import { DEFAULT_PET_IMAGE } from '@/lib/constants'
-import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
+import { petFormSchema, TPetForm } from '@/lib/validations'
 
 type PetFormProps = {
   actionType: 'edit' | 'add'
   onFormSubmission: () => void
 }
-
-type Inputs = PetPayload & {}
-
-const petFormSchema = z.object({
-  name: z.string().trim().min(1, { message: 'Name is required' }).max(100),
-  ownerName: z
-    .string()
-    .trim()
-    .min(1, { message: 'Owner name is required' })
-    .max(100),
-  imageUrl: z.union([
-    z.literal(''),
-    z.string().trim().url({ message: 'Image url must be a valid url' }),
-  ]),
-  age: z.coerce
-    .number({ message: 'Must be a valid number' })
-    .int()
-    .positive()
-    .max(99999),
-  notes: z.union([z.literal(''), z.string().trim().max(1000)]),
-})
 
 export default function PetForm({
   actionType,
@@ -48,7 +26,7 @@ export default function PetForm({
     trigger,
     getValues,
     formState: { errors },
-  } = useForm<Inputs>({
+  } = useForm<TPetForm>({
     resolver: zodResolver(petFormSchema),
     defaultValues:
       actionType === 'edit'
@@ -106,7 +84,7 @@ export default function PetForm({
 
         <div className="space-y-1">
           <Label htmlFor="age">Age</Label>
-          <Input {...register('age', { valueAsNumber: true })} id="age" />
+          <Input {...register('age')} id="age" />
           {errors.age && <p className="text-red-500">{errors.age.message}</p>}
         </div>
 
