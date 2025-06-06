@@ -1,77 +1,86 @@
-import NextAuth, { NextAuthConfig } from 'next-auth'
-import Credentials from 'next-auth/providers/credentials'
-import prisma from './db'
-import bcrypt from 'bcryptjs'
+import NextAuth, { NextAuthConfig } from "next-auth";
+import Credentials from "next-auth/providers/credentials";
+import prisma from "./db";
+import bcrypt from "bcryptjs";
+import { getUserByEmail } from "./server-utils";
+import { authSchema, TAuth } from "./validations";
 
 const config = {
   pages: {
-    signIn: '/login',
+    signIn: "/login",
   },
   providers: [
     Credentials({
       async authorize(credentials) {
-        const { email, password } = credentials
+        const validatedFormData = authSchema.safeParse(credentials);
 
-        const user = await prisma.user.findUnique({
-          where: {
-            email,
-          },
-        })
+        if (!validatedFormData.success) {
+          return null;
+        }
+
+        const { email, password } = validatedFormData.data;
+
+        const user = await getUserByEmail(email);
 
         if (!user) {
-          console.log('No user found')
-          return null
+          console.log("No user found");
+          return null;
         }
 
-        const passwordMatch = bcrypt.compare(password, user.hashedPassword)
+        const passwordMatch = bcrypt.compare(password, user.hashedPassword);
 
         if (!passwordMatch) {
-          console.log('Invalid credentials')
-          return null
+          console.log("Invalid credentials");
+          return null;
         }
 
-        return user
+        return user;
       },
     }),
   ],
   callbacks: {
     authorized: ({ auth, request }) => {
-      const isLoggedIn = Boolean(auth?.user)
-      const isTryingToAccessApp = request.nextUrl.pathname.includes('app')
+      const isLoggedIn = Boolean(auth?.user);
+      const isTryingToAccessApp = request.nextUrl.pathname.includes("app");
 
       if (!isLoggedIn && isTryingToAccessApp) {
-        return false
+        return false;
       }
 
       if (isLoggedIn && isTryingToAccessApp) {
-        return true
+        return true;
       }
 
       if (isLoggedIn && !isTryingToAccessApp) {
-        return Response.redirect(new URL('/app/dashboard', request.nextUrl))
+        return Response.redirect(new URL("/app/dashboard", request.nextUrl));
       }
 
       if (!isLoggedIn && !isTryingToAccessApp) {
-        return true
+        return true;
       }
 
-      return false
+      return false;
     },
     jwt: ({ token, user }) => {
       if (user) {
-        token.userId = user.id
+        token.userId = user.id;
       }
 
-      return token
+      return token;
     },
     session: ({ session, token }) => {
       if (session.user) {
-        session.user.id = token.userId
+        session.user.id = token.userId;
       }
 
-      return session
+      return session;
     },
   },
-} satisfies NextAuthConfig
+} satisfies NextAuthConfig;
 
-export const { auth, signIn, signOut } = NextAuth(config)
+export const {
+  auth,
+  signIn,
+  signOut,
+  handlers: { GET, POST },
+} = NextAuth(config);
